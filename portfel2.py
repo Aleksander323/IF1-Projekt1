@@ -60,39 +60,6 @@ def GBM(n, points, alpha, sigma, S0):
     return S
 
 
-def delta_hedge_simulation(S0, K, T, r, sigma, mu, dt=1 / 252):
-    """Simulates a delta hedging strategy for a short call position."""
-    # Generate GBM path
-    n = int(1/dt)
-    points = BM(n)
-    alpha = mu - sigma**2/2
-    S_t = GBM(n, points, alpha, sigma, S0)
-    # S_t = dane_hist
-    # Initial Black-Scholes price
-    call_price = bs_price(S0, K, T, r, sigma)
-    delta = get_delta(S0, K, T, r, sigma)
-
-    # Short the call, buy delta shares
-    cash_position = call_price - delta * S0  # Initial cash position
-    stock_position = delta
-    portfolio_value = call_price
-    stan_portfela = [portfolio_value]
-
-    # Iterate over time steps to rebalance hedge
-    for i in range(1, len(S_t)-1):
-        tau = T - i * dt  # Time remaining
-        new_delta = get_delta(S_t[i], K, tau, r, sigma)
-        cash_position = cash_position * np.exp(r * dt) - (new_delta - stock_position) * S_t[i]
-        stock_position = new_delta
-        portfolio_value = cash_position + stock_position * S_t[i]
-        stan_portfela.append(portfolio_value)
-
-    # Final profit/loss
-    final_pnl = cash_position * np.exp(r * dt) + stock_position * S_t[-1] - max(S_t[-1] - K, 0)  # Payoff of the short call
-    stan_portfela.append(final_pnl)
-    return final_pnl, S_t, stan_portfela
-
-
 def delta_hedge_simulation2(S0, K, T, r, sigma, mu, n_hedgepoints):
     """Simulates a delta hedging strategy for a short call position."""
     # Generate GBM path
